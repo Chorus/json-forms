@@ -563,37 +563,33 @@ if (typeof brutusin === "undefined") {
                     parentObject[propertyProvider.getValue()] = current;
                 }
             }
-            var table = document.createElement("table");
-            table.className = "object";
-            var tbody = document.createElement("tbody");
-            appendChild(table, tbody, s);
+            //============== New ======================
+            var divWrapper = document.createElement("div");
+            divWrapper.className = "object";
             var propNum = 0;
             if (s.hasOwnProperty("properties")) {
                 propNum = s.properties.length;
-                for (var prop in s.properties) {
-                    var tr = document.createElement("tr");
-                    var td1 = document.createElement("td");
-                    td1.className = "prop-name";
+                for (var prop in s.properties) {                 
+                    var propName = document.createElement("div");
+                    propName.className = "prop-name";
                     var propId = id + "." + prop;
                     var propSchema = getSchema(getSchemaId(propId));
-                    var td2 = document.createElement("td");
-                    td2.className = "prop-value";
-
-                    appendChild(tbody, tr, propSchema);
-                    appendChild(tr, td1, propSchema);
-                    appendChild(tr, td2, propSchema);
+                    var propValue = document.createElement("div");
+                    propValue.className = "prop-value";                   
+                    appendChild(divWrapper, propName, propSchema);
+                    appendChild(divWrapper, propValue, propSchema);
                     var pp = createStaticPropertyProvider(prop);
                     var propInitialValue = null;
                     if (value) {
                         propInitialValue = value[prop];
                     }
-                    render(td1, td2, propId, current, pp, propInitialValue);
+                    render(propName, propValue, propId, current, pp, propInitialValue);
                 }
             }
             var usedProps = [];
             if (s.patternProperties || s.additionalProperties) {
                 var div = document.createElement("div");
-                appendChild(div, table, s);
+                appendChild(div, divWrapper, s);
                 if (s.patternProperties) {
                     for (var pattern in s.patternProperties) {
                         var patProps = s.patternProperties[pattern];
@@ -604,14 +600,14 @@ if (typeof brutusin === "undefined") {
                         addButton.pattern = pattern;
                         addButton.id = id + "[" + pattern + "]";
                         addButton.onclick = function () {
-                            addAdditionalProperty(current, table, this.id, undefined, undefined, this.pattern);
+                            addAdditionalProperty(current, divWrapper, this.id, undefined, undefined, this.pattern);
                         };
                         if (s.maxProperties || s.minProperties) {
                             addButton.getValidationError = function () {
-                                if (s.minProperties && propNum + table.rows.length < s.minProperties) {
+                                if (s.minProperties && propNum + divWrapper.children.length < s.minProperties) {
                                     return BrutusinForms.messages["minProperties"].format(s.minProperties);
                                 }
-                                if (s.maxProperties && propNum + table.rows.length > s.maxProperties) {
+                                if (s.maxProperties && propNum + divWrapper.children.length > s.maxProperties) {
                                     return BrutusinForms.messages["maxProperties"].format(s.maxProperties);
                                 }
                             };
@@ -633,7 +629,7 @@ if (typeof brutusin === "undefined") {
                                 if (usedProps.indexOf(p) !== -1) {
                                     continue;
                                 }
-                                addAdditionalProperty(current, table, id + "[" + pattern + "]", p, value[p], pattern);
+                                addAdditionalProperty(current, divWrapper, id + "[" + pattern + "]", p, value[p], pattern);
                                 usedProps.push(p);
                             }
                         }
@@ -645,14 +641,14 @@ if (typeof brutusin === "undefined") {
                     var addButton = document.createElement("button");
                     addButton.setAttribute('type', 'button');
                     addButton.onclick = function () {
-                        addAdditionalProperty(current, table, id + "[*]", undefined);
+                        addAdditionalProperty(current, divWrapper, id + "[*]", undefined);
                     };
                     if (s.maxProperties || s.minProperties) {
                         addButton.getValidationError = function () {
-                            if (s.minProperties && propNum + table.rows.length < s.minProperties) {
+                            if (s.minProperties && propNum + divWrapper.children.length < s.minProperties) {
                                 return BrutusinForms.messages["minProperties"].format(s.minProperties);
                             }
-                            if (s.maxProperties && propNum + table.rows.length > s.maxProperties) {
+                            if (s.maxProperties && propNum + divWrapper.children.length > s.maxProperties) {
                                 return BrutusinForms.messages["maxProperties"].format(s.maxProperties);
                             }
                         };
@@ -670,14 +666,14 @@ if (typeof brutusin === "undefined") {
                             if (usedProps.indexOf(p) !== -1) {
                                 continue;
                             }
-                            addAdditionalProperty(current, table, id + "[\"" + prop + "\"]", p, value[p]);
+                            addAdditionalProperty(current, divWrapper, id + "[\"" + prop + "\"]", p, value[p]);
                         }
                     }
                 }
                 appendChild(container, div, s);
             } else {
-                appendChild(container, table, s);
-            }
+                appendChild(container, divWrapper, s);
+            }          
         };
         // end of object renderer
         renderers["array"] = function (container, id, parentObject, propertyProvider, value) {
