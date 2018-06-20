@@ -693,7 +693,7 @@ if (typeof brutusin === "undefined") {
                 itemIndex.className = "item-index";
                 var removeButton = document.createElement("button");
                 removeButton.setAttribute('type', 'button');
-                removeButton.className = "remove";
+                removeButton.className = "remove pull-right";
                 var itemValue = document.createElement("div");
                 itemValue.className = "item-value";
 
@@ -718,11 +718,12 @@ if (typeof brutusin === "undefined") {
                     parent.removeChild(itemWrapper);
                     computChildCount();
                 };           
-                appendChild(itemWrapper, removeButton, s);
+              
                 var number = document.createTextNode(parent.children.length + 1);
                 appendChild(itemIndex, number, s);
                 appendChild(itemWrapper, itemIndex, s);
                 appendChild(itemWrapper, itemValue, s);
+                appendChild(itemWrapper, removeButton, s);
                 appendChild(parent, itemWrapper, s);
                 var pp = createPropertyProvider(function () {
                     return 1;
