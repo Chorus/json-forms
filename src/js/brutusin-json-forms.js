@@ -681,47 +681,53 @@ if (typeof brutusin === "undefined") {
         };
         // end of object renderer
         renderers["array"] = function (container, id, parentObject, propertyProvider, value) {
-            function addItem(current, table, id, value, readOnly) {
+
+            //current:array, table:table elm, id, value:item, readOnly:bool
+            function addItem(current, parent, id, value, readOnly) {
                 var schemaId = getSchemaId(id);
-                var s = getSchema(schemaId);
-                var tbody = document.createElement("tbody");
-                var tr = document.createElement("tr");
-                tr.className = "item";
-                var td1 = document.createElement("td");
-                td1.className = "item-index";
-                var td2 = document.createElement("td");
-                td2.className = "item-action";
-                var td3 = document.createElement("td");
-                td3.className = "item-value";
+                var s = getSchema(schemaId);                
+                  
+                var itemWrapper = document.createElement("div");
+                itemWrapper.className = "item";
+                var itemIndex = document.createElement("span");
+                itemIndex.className = "item-index";
                 var removeButton = document.createElement("button");
                 removeButton.setAttribute('type', 'button');
                 removeButton.className = "remove";
-                if (readOnly === true)
+                var itemValue = document.createElement("div");
+                itemValue.className = "item-value";
+
+                if (readOnly === true){
                     removeButton.disabled = true;
+                }
                 appendChild(removeButton, document.createTextNode("x"), s);
-                var computRowCount = function () {
-                    for (var i = 0; i < table.rows.length; i++) {
-                        var row = table.rows[i];
-                        row.cells[0].innerHTML = i + 1;
+
+                var computChildCount = function () {
+                    for (var i = 0; i < parent.children.length; i++) {
+                        var childElm = parent.children[i];
+                        for(var j = 0; j < childElm.children.length; j++){
+                            var grandChildElm = childElm.children[j];
+                            if(grandChildElm.className == "item-index"){
+                                grandChildElm.innerHTML = i + 1;
+                            }
+                        }                      
                     }
                 };
+
                 removeButton.onclick = function () {
-                    current.splice(tr.rowIndex, 1);
-                    table.deleteRow(tr.rowIndex);
-                    computRowCount();
-                };
-                appendChild(td2, removeButton, s);
-                var number = document.createTextNode(table.rows.length + 1);
-                appendChild(td1, number, s);
-                appendChild(tr, td1, s);
-                appendChild(tr, td2, s);
-                appendChild(tr, td3, s);
-                appendChild(tbody, tr, s);
-                appendChild(table, tbody, s);
+                    parent.removeChild(itemWrapper);
+                    computChildCount();
+                };           
+                appendChild(itemWrapper, removeButton, s);
+                var number = document.createTextNode(parent.children.length + 1);
+                appendChild(itemIndex, number, s);
+                appendChild(itemWrapper, itemIndex, s);
+                appendChild(itemWrapper, itemValue, s);
+                appendChild(parent, itemWrapper, s);
                 var pp = createPropertyProvider(function () {
-                    return tr.rowIndex;
+                    return 1;
                 });
-                render(null, td3, id, current, pp, value);
+                render(null, itemValue, id, current, pp, value);
             }
 
             var schemaId = getSchemaId(id);
@@ -742,9 +748,9 @@ if (typeof brutusin === "undefined") {
                 };
             }
             var div = document.createElement("div");
-            var table = document.createElement("table");
-            table.className = "array";
-            appendChild(div, table, s);
+            var parentWrapper = document.createElement("div");
+            parentWrapper.className = "array";
+            appendChild(div, parentWrapper, s);
             appendChild(container, div, s);
             var addButton = document.createElement("button");
             if (s.readOnly)
@@ -752,10 +758,10 @@ if (typeof brutusin === "undefined") {
             addButton.setAttribute('type', 'button');
             addButton.className = "addItem";
             addButton.getValidationError = function () {
-                if (s.minItems && s.minItems > table.rows.length) {
+                if (s.minItems && s.minItems > parentWrapper.children.length) {
                     return BrutusinForms.messages["minItems"].format(s.minItems);
                 }
-                if (s.maxItems && s.maxItems < table.rows.length) {
+                if (s.maxItems && s.maxItems < parentWrapper.children.length) {
                     return BrutusinForms.messages["maxItems"].format(s.maxItems);
                 }
                 if (s.uniqueItems) {
@@ -769,17 +775,17 @@ if (typeof brutusin === "undefined") {
                 }
             };
             addButton.onclick = function () {
-                addItem(current, table, id + "[#]", null);
+                addItem(current, parentWrapper, id + "[#]", null);
             };
             if (itemS.description) {
                 addButton.title = itemS.description;
             }
             appendChild(addButton, document.createTextNode(BrutusinForms.messages["addItem"]), s);
-            appendChild(div, table, s);
+            appendChild(div, parentWrapper, s);
             appendChild(div, addButton, s);
             if (value && value instanceof Array) {
                 for (var i = 0; i < value.length; i++) {
-                    addItem(current, table, id + "[" + i + "]", value[i], s.readOnly);
+                    addItem(current, parentWrapper, id + "[" + i + "]", value[i], s.readOnly);
                 }
             }
             appendChild(container, div, s);
