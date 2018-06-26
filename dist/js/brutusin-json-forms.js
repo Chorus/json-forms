@@ -562,8 +562,7 @@ if (typeof brutusin === "undefined") {
                 if (propertyProvider.getValue() || propertyProvider.getValue() === 0) {
                     parentObject[propertyProvider.getValue()] = current;
                 }
-            }
-            //============== New ======================
+            }          
             var divWrapper = document.createElement("div");
             divWrapper.className = "object";
             var propNum = 0;
@@ -677,8 +676,6 @@ if (typeof brutusin === "undefined") {
         };
         // end of object renderer
         renderers["array"] = function (container, id, parentObject, propertyProvider, value) {
-
-            //current:array, table:table elm, id, value:item, readOnly:bool
             function addItem(current, parent, id, value, readOnly) {
                 var schemaId = getSchemaId(id);
                 var s = getSchema(schemaId);                
@@ -709,7 +706,9 @@ if (typeof brutusin === "undefined") {
                         }                      
                     }
                 };
-
+                var itemindex = function(item){
+                   return Array.prototype.indexOf.call(parent.children, item);
+                };
                 removeButton.onclick = function () {
                     parent.removeChild(itemWrapper);
                     computChildCount();
@@ -722,7 +721,7 @@ if (typeof brutusin === "undefined") {
                 appendChild(itemWrapper, removeButton, s);
                 appendChild(parent, itemWrapper, s);
                 var pp = createPropertyProvider(function () {
-                    return 1;
+                    return itemindex(itemWrapper);
                 });
                 render(null, itemValue, id, current, pp, value);
             }
