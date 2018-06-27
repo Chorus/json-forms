@@ -1415,7 +1415,7 @@ if (typeof brutusin === "undefined") {
                             throw ("Node '" + name + "' is of type array");
                         }
                         var element = currentToken.substring(1, currentToken.length - 1);
-                        if (element.equals("#")) {
+                        if (element === "#") {
                             for (var i = 0; i < data.length; i++) {
                                 var child = data[i];
                                 visit(name + currentToken, queue.slice(0), child, data, i);
