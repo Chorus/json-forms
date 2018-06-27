@@ -303,6 +303,9 @@ if (typeof brutusin === "undefined") {
             };
 
             input.onchange = function () {
+                if(obj.changeCallback) {
+                    obj.changeCallback(this, s)
+                }
                 var value;
                 try {
                     value = getValue(s, input);
@@ -771,7 +774,7 @@ if (typeof brutusin === "undefined") {
                 }
             };
             addButton.onclick = function () {
-                addItem(current, parentWrapper, id + "[#]", null);
+                addItem(current, parentWrapper, id + "[" + current.length + "]", null);
             };
             if (itemS.description) {
                 addButton.title = itemS.description;
@@ -896,7 +899,7 @@ if (typeof brutusin === "undefined") {
                 return removeEmptiesAndNulls(data, schema);
             }
         };
-
+              
         BrutusinForms.instances[BrutusinForms.instances.length] = obj;
 
         return obj;
@@ -1180,18 +1183,14 @@ if (typeof brutusin === "undefined") {
         }
 
         function render(titleContainer, container, id, parentObject, propertyProvider, value) {
-            //console.log(id);
             var schemaId = getSchemaId(id);
             var s = getSchema(schemaId);
-            renderInfoMap[schemaId] = new Object();
-            renderInfoMap[schemaId].titleContainer = titleContainer;
-            renderInfoMap[schemaId].container = container;
-            renderInfoMap[schemaId].parentObject = parentObject;
-            renderInfoMap[schemaId].propertyProvider = propertyProvider;
-            renderInfoMap[schemaId].value = value;
-            clear(titleContainer);
-            clear(container);
-            //console.log(id,s,value);
+            renderInfoMap[id] = new Object();
+            renderInfoMap[id].titleContainer = titleContainer;
+            renderInfoMap[id].container = container;
+            renderInfoMap[id].parentObject = parentObject;
+            renderInfoMap[id].propertyProvider = propertyProvider;
+            renderInfoMap[id].value = value;           
             var r = renderers[s.type];
             if (r && !s.dependsOn) {
                 if (s.title) {
