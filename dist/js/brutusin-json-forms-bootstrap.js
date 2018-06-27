@@ -116,7 +116,7 @@ if (("undefined" === typeof $ || "undefined" === typeof $.fn || "undefined" === 
             // https://github.com/select2/select2
             if (!("undefined" === typeof $ || "undefined" === typeof $.fn || "undefined" === typeof $.fn.select2) && tagName === "select") {
                 element.title = "";
-                element.className += "select2";
+                element.className += " select2";
                 element.setAttribute("data-live-search", true);
                 var options = {};
                 if(schema.enum){
