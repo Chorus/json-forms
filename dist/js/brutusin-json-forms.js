@@ -187,7 +187,7 @@ if (typeof brutusin === "undefined") {
                     appendChild(option, textNode, s);
                     appendChild(input, option, s);
                 }
-                var selectedIndex = 0;
+                var selectedIndex = -1;
                 for (var i = 0; i < s.enum.length; i++) {
                     var option = document.createElement("option");
                     var textNode = document.createTextNode(s.enum[i]);
@@ -315,7 +315,10 @@ if (typeof brutusin === "undefined") {
                     value = null;
                 }
                 if (parentObject) {
-                    parentObject[propertyProvider.getValue()] = value;
+                    if(value){
+                        parentObject[propertyProvider.getValue()] = value;
+                    }
+                  
                 } else {
                     data = value;
                 }
