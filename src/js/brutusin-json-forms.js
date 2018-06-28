@@ -230,6 +230,8 @@ if (typeof brutusin === "undefined") {
                     input.type = "email";
                 } else if (s.format === "text") {
                     input = document.createElement("textarea");
+                } else if(s.format === "hidden"){
+                    input.style.display  = "none";       
                 } else {
                     input.type = "text";
                 }
@@ -571,13 +573,17 @@ if (typeof brutusin === "undefined") {
             var propNum = 0;
             if (s.hasOwnProperty("properties")) {
                 propNum = s.properties.length;
-                for (var prop in s.properties) {                 
-                    var propName = document.createElement("div");
-                    propName.className = "prop-name";
+                for (var prop in s.properties) {
                     var propId = id + "." + prop;
                     var propSchema = getSchema(getSchemaId(propId));
+                    var propName = document.createElement("div");
+                    propName.className = "prop-name";    
                     var propValue = document.createElement("div");
-                    propValue.className = "prop-value";                   
+                    propValue.className = "prop-value";
+                    if(propSchema.format === "hidden"){
+                        propName.style.display  = "none";
+                        propValue.style.display  = "none";
+                    }
                     appendChild(divWrapper, propName, propSchema);
                     appendChild(divWrapper, propValue, propSchema);
                     var pp = createStaticPropertyProvider(prop);
@@ -1195,9 +1201,9 @@ if (typeof brutusin === "undefined") {
             clear(container); 
             var r = renderers[s.type];
             if (r && !s.dependsOn) {
-                if (s.title) {
+                if (s.title && s.format !== "hidden") {
                     renderTitle(titleContainer, s.title, s);
-                } else if (propertyProvider) {
+                } else if (propertyProvider && s.format !== "hidden") {
                     renderTitle(titleContainer, propertyProvider.getValue(), s);
                 }
                 if (!value) {
@@ -1227,7 +1233,7 @@ if (typeof brutusin === "undefined") {
                     BrutusinForms.onResolutionStarted(parentObject);
                     obj.schemaResolver([id], obj.getData(), cb);
                 }
-            }
+            }           
         }
 
         /**
@@ -1528,7 +1534,7 @@ if (typeof brutusin === "undefined") {
                 }
                 return ret;
             }
-        }
+        }      
     };
     brutusin["json-forms"] = BrutusinForms;
 }());
