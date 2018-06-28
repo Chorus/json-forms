@@ -1265,8 +1265,11 @@ if (typeof brutusin === "undefined") {
             }
             var value;
             
-            if (input.tagName.toLowerCase() === "select") {
-                value = input.options[input.selectedIndex].value;
+            if (input.tagName.toLowerCase() === "select") {               
+                value =  $(input).val();
+                if(typeof value === "object"){
+                    value = value.join();
+                }
             } else {
                 value = input.value;
             }

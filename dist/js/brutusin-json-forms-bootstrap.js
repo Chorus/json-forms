@@ -118,10 +118,11 @@ if (("undefined" === typeof $ || "undefined" === typeof $.fn || "undefined" === 
                 element.title = "";
                 element.className += " select2";            
                 var options = {
-                    width: '100%'
+                    width: '100%'                      
                 };
                 if(schema.enum){
                     options.tags = true;
+                    options.multiple= true;
                 }
                 $(element).select2(options);
             }
