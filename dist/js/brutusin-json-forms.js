@@ -713,6 +713,7 @@ if (typeof brutusin === "undefined") {
                    return Array.prototype.indexOf.call(parent.children, item);
                 };
                 removeButton.onclick = function () {
+                    current.splice(itemindex(itemWrapper), 1);
                     parent.removeChild(itemWrapper);
                     computChildCount();
                 };           
@@ -899,7 +900,7 @@ if (typeof brutusin === "undefined") {
                 return removeEmptiesAndNulls(data, schema);
             }
         };
-              
+
         BrutusinForms.instances[BrutusinForms.instances.length] = obj;
 
         return obj;
@@ -1181,7 +1182,6 @@ if (typeof brutusin === "undefined") {
                 }
             }
         }
-
         function render(titleContainer, container, id, parentObject, propertyProvider, value) {
             var schemaId = getSchemaId(id);
             var s = getSchema(schemaId);
@@ -1190,7 +1190,9 @@ if (typeof brutusin === "undefined") {
             renderInfoMap[id].container = container;
             renderInfoMap[id].parentObject = parentObject;
             renderInfoMap[id].propertyProvider = propertyProvider;
-            renderInfoMap[id].value = value;           
+            renderInfoMap[id].value = value;          
+            clear(titleContainer);	
+            clear(container); 
             var r = renderers[s.type];
             if (r && !s.dependsOn) {
                 if (s.title) {
