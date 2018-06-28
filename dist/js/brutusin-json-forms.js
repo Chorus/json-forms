@@ -1346,7 +1346,7 @@ if (typeof brutusin === "undefined") {
                     for (var id in schemas) {
                         if (JSON.stringify(schemaMap[id]) !== JSON.stringify(schemas[id])) {
                             cleanSchemaMap(id);
-                            cleanData(id);
+                            //cleanData(id);
                             populateSchemaMap(id, schemas[id]);
                             var renderInfo = renderInfoMap[id];
                             if (renderInfo) {
