@@ -22,8 +22,8 @@ if ("undefined" === typeof markdown && window.console) {
     console.warn("Include markdown.js (https://github.com/evilstreak/markdown-js) to add markdown support in property description popups");
 }
 
-if (("undefined" === typeof $ || "undefined" === typeof $.fn || "undefined" === typeof $.fn.selectpicker) && window.console) {
-    console.warn("Include bootstrap-select.js (https://github.com/silviomoreto/bootstrap-select) to turn native selects into bootstrap components");
+if (("undefined" === typeof $ || "undefined" === typeof $.fn || "undefined" === typeof $.fn.select2) && window.console) {
+    console.warn("Include select2.js (https://github.com/select2/select2) to turn native selects into select2 components");
 }
 
 (function () {
@@ -109,16 +109,22 @@ if (("undefined" === typeof $ || "undefined" === typeof $.fn || "undefined" === 
 //        }input
 //    }
 //});
-// Bootstrap select
+    // select2
     BrutusinForms.addDecorator(function (element, schema) {
         if (element.tagName) {
             var tagName = element.tagName.toLowerCase();
-            // https://github.com/silviomoreto/bootstrap-select
-            if (!("undefined" === typeof $ || "undefined" === typeof $.fn || "undefined" === typeof $.fn.selectpicker) && tagName === "select") {
+            // https://github.com/select2/select2
+            if (!("undefined" === typeof $ || "undefined" === typeof $.fn || "undefined" === typeof $.fn.select2) && tagName === "select") {
                 element.title = "";
-                element.className += " selectpicker";
-                element.setAttribute("data-live-search", true);
-                $(element).selectpicker();
+                element.className += " select2";            
+                var options = {
+                    width: '100%'                      
+                };
+                if(schema.enum){
+                    options.tags = true;
+                    options.multiple= true;
+                }
+                $(element).select2(options);
             }
         }
     });

@@ -180,6 +180,11 @@ if (typeof brutusin === "undefined") {
                 // XXX TODO, encode the SOB properly.
             } else if (s.enum) {
                 input = document.createElement("select");
+
+                //if its multiple selection
+                if(value && value.includes(",")){
+                    value = value.split(',');
+                }
                 if (!s.required) {
                     var option = document.createElement("option");
                     var textNode = document.createTextNode("");
@@ -187,26 +192,43 @@ if (typeof brutusin === "undefined") {
                     appendChild(option, textNode, s);
                     appendChild(input, option, s);
                 }
-                var selectedIndex = 0;
+                var selectedIndex = -1;
                 for (var i = 0; i < s.enum.length; i++) {
                     var option = document.createElement("option");
                     var textNode = document.createTextNode(s.enum[i]);
                     option.value = s.enum[i];
                     appendChild(option, textNode, s);
                     appendChild(input, option, s);
-                    if (value && s.enum[i] === value) {
-                        selectedIndex = i;
-                        if (!s.required) {
-                            selectedIndex++;
+                    if(typeof value === "string"){
+                        if (value && s.enum[i] === value) {
+                            selectedIndex = i;
+                            if (!s.required) {
+                                selectedIndex++;
+                            }
+                            if (s.readOnly)
+                                input.disabled = true;
                         }
-                        if (s.readOnly)
-                            input.disabled = true;
                     }
+                }               
+                var setValCb;
+                if(typeof value === "string"){
+                    if (s.enum.length === 1){
+                        input.selectedIndex = 0;
+                    }
+                    else {
+                        input.selectedIndex = selectedIndex;
+                    }                  
                 }
-                if (s.enum.length === 1)
-                    input.selectedIndex = 0;
-                else
-                    input.selectedIndex = selectedIndex;
+                else if (value) {
+                    input.selectedIndex = -1;
+                    setValCb = function(){
+                        $(input).val(value).trigger('change');
+                    }                   
+                }
+                else {
+                    input.selectedIndex = -1;
+                }
+             
             } else {
                 input = document.createElement("input");
                 if (s.type === "integer" || s.type === "number") {
@@ -230,6 +252,8 @@ if (typeof brutusin === "undefined") {
                     input.type = "email";
                 } else if (s.format === "text") {
                     input = document.createElement("textarea");
+                } else if(s.format === "hidden"){
+                    input.style.display  = "none";       
                 } else {
                     input.type = "text";
                 }
@@ -303,6 +327,9 @@ if (typeof brutusin === "undefined") {
             };
 
             input.onchange = function () {
+                if(obj.changeCallback) {
+                    obj.changeCallback(this, s)
+                }
                 var value;
                 try {
                     value = getValue(s, input);
@@ -310,7 +337,10 @@ if (typeof brutusin === "undefined") {
                     value = null;
                 }
                 if (parentObject) {
-                    parentObject[propertyProvider.getValue()] = value;
+                    if(value){
+                        parentObject[propertyProvider.getValue()] = value;
+                    }
+                  
                 } else {
                     data = value;
                 }
@@ -337,7 +367,7 @@ if (typeof brutusin === "undefined") {
             input.onchange();
             input.id = getInputId();
             inputCounter++;
-            appendChild(container, input, s);
+            appendChild(container, input, s, setValCb);
             return parentObject;
         };
 
@@ -562,38 +592,37 @@ if (typeof brutusin === "undefined") {
                 if (propertyProvider.getValue() || propertyProvider.getValue() === 0) {
                     parentObject[propertyProvider.getValue()] = current;
                 }
-            }
-            var table = document.createElement("table");
-            table.className = "object";
-            var tbody = document.createElement("tbody");
-            appendChild(table, tbody, s);
+            }          
+            var divWrapper = document.createElement("div");
+            divWrapper.className = "object";
             var propNum = 0;
             if (s.hasOwnProperty("properties")) {
                 propNum = s.properties.length;
                 for (var prop in s.properties) {
-                    var tr = document.createElement("tr");
-                    var td1 = document.createElement("td");
-                    td1.className = "prop-name";
                     var propId = id + "." + prop;
                     var propSchema = getSchema(getSchemaId(propId));
-                    var td2 = document.createElement("td");
-                    td2.className = "prop-value";
-
-                    appendChild(tbody, tr, propSchema);
-                    appendChild(tr, td1, propSchema);
-                    appendChild(tr, td2, propSchema);
+                    var propName = document.createElement("div");
+                    propName.className = "prop-name";    
+                    var propValue = document.createElement("div");
+                    propValue.className = "prop-value";
+                    if(propSchema.format === "hidden"){
+                        propName.style.display  = "none";
+                        propValue.style.display  = "none";
+                    }
+                    appendChild(divWrapper, propName, propSchema);
+                    appendChild(divWrapper, propValue, propSchema);
                     var pp = createStaticPropertyProvider(prop);
                     var propInitialValue = null;
                     if (value) {
                         propInitialValue = value[prop];
                     }
-                    render(td1, td2, propId, current, pp, propInitialValue);
+                    render(propName, propValue, propId, current, pp, propInitialValue);
                 }
             }
             var usedProps = [];
             if (s.patternProperties || s.additionalProperties) {
                 var div = document.createElement("div");
-                appendChild(div, table, s);
+                appendChild(div, divWrapper, s);
                 if (s.patternProperties) {
                     for (var pattern in s.patternProperties) {
                         var patProps = s.patternProperties[pattern];
@@ -604,14 +633,14 @@ if (typeof brutusin === "undefined") {
                         addButton.pattern = pattern;
                         addButton.id = id + "[" + pattern + "]";
                         addButton.onclick = function () {
-                            addAdditionalProperty(current, table, this.id, undefined, undefined, this.pattern);
+                            addAdditionalProperty(current, divWrapper, this.id, undefined, undefined, this.pattern);
                         };
                         if (s.maxProperties || s.minProperties) {
                             addButton.getValidationError = function () {
-                                if (s.minProperties && propNum + table.rows.length < s.minProperties) {
+                                if (s.minProperties && propNum + divWrapper.children.length < s.minProperties) {
                                     return BrutusinForms.messages["minProperties"].format(s.minProperties);
                                 }
-                                if (s.maxProperties && propNum + table.rows.length > s.maxProperties) {
+                                if (s.maxProperties && propNum + divWrapper.children.length > s.maxProperties) {
                                     return BrutusinForms.messages["maxProperties"].format(s.maxProperties);
                                 }
                             };
@@ -633,7 +662,7 @@ if (typeof brutusin === "undefined") {
                                 if (usedProps.indexOf(p) !== -1) {
                                     continue;
                                 }
-                                addAdditionalProperty(current, table, id + "[" + pattern + "]", p, value[p], pattern);
+                                addAdditionalProperty(current, divWrapper, id + "[" + pattern + "]", p, value[p], pattern);
                                 usedProps.push(p);
                             }
                         }
@@ -645,14 +674,14 @@ if (typeof brutusin === "undefined") {
                     var addButton = document.createElement("button");
                     addButton.setAttribute('type', 'button');
                     addButton.onclick = function () {
-                        addAdditionalProperty(current, table, id + "[*]", undefined);
+                        addAdditionalProperty(current, divWrapper, id + "[*]", undefined);
                     };
                     if (s.maxProperties || s.minProperties) {
                         addButton.getValidationError = function () {
-                            if (s.minProperties && propNum + table.rows.length < s.minProperties) {
+                            if (s.minProperties && propNum + divWrapper.children.length < s.minProperties) {
                                 return BrutusinForms.messages["minProperties"].format(s.minProperties);
                             }
-                            if (s.maxProperties && propNum + table.rows.length > s.maxProperties) {
+                            if (s.maxProperties && propNum + divWrapper.children.length > s.maxProperties) {
                                 return BrutusinForms.messages["maxProperties"].format(s.maxProperties);
                             }
                         };
@@ -670,58 +699,66 @@ if (typeof brutusin === "undefined") {
                             if (usedProps.indexOf(p) !== -1) {
                                 continue;
                             }
-                            addAdditionalProperty(current, table, id + "[\"" + prop + "\"]", p, value[p]);
+                            addAdditionalProperty(current, divWrapper, id + "[\"" + prop + "\"]", p, value[p]);
                         }
                     }
                 }
                 appendChild(container, div, s);
             } else {
-                appendChild(container, table, s);
-            }
+                appendChild(container, divWrapper, s);
+            }          
         };
         // end of object renderer
         renderers["array"] = function (container, id, parentObject, propertyProvider, value) {
-            function addItem(current, table, id, value, readOnly) {
+            function addItem(current, parent, id, value, readOnly) {
                 var schemaId = getSchemaId(id);
-                var s = getSchema(schemaId);
-                var tbody = document.createElement("tbody");
-                var tr = document.createElement("tr");
-                tr.className = "item";
-                var td1 = document.createElement("td");
-                td1.className = "item-index";
-                var td2 = document.createElement("td");
-                td2.className = "item-action";
-                var td3 = document.createElement("td");
-                td3.className = "item-value";
+                var s = getSchema(schemaId);                
+                  
+                var itemWrapper = document.createElement("div");
+                itemWrapper.className = "item";
+                var itemIndex = document.createElement("span");
+                itemIndex.className = "item-index";
                 var removeButton = document.createElement("button");
                 removeButton.setAttribute('type', 'button');
-                removeButton.className = "remove";
-                if (readOnly === true)
+                removeButton.className = "remove pull-right";
+                var itemValue = document.createElement("div");
+                itemValue.className = "item-value";
+
+                if (readOnly === true){
                     removeButton.disabled = true;
+                }
                 appendChild(removeButton, document.createTextNode("x"), s);
-                var computRowCount = function () {
-                    for (var i = 0; i < table.rows.length; i++) {
-                        var row = table.rows[i];
-                        row.cells[0].innerHTML = i + 1;
+
+                var computChildCount = function () {
+                    for (var i = 0; i < parent.children.length; i++) {
+                        var childElm = parent.children[i];
+                        for(var j = 0; j < childElm.children.length; j++){
+                            var grandChildElm = childElm.children[j];
+                            if(grandChildElm.className == "item-index"){
+                                grandChildElm.innerHTML = i + 1;
+                            }
+                        }                      
                     }
                 };
-                removeButton.onclick = function () {
-                    current.splice(tr.rowIndex, 1);
-                    table.deleteRow(tr.rowIndex);
-                    computRowCount();
+                var itemindex = function(item){
+                   return Array.prototype.indexOf.call(parent.children, item);
                 };
-                appendChild(td2, removeButton, s);
-                var number = document.createTextNode(table.rows.length + 1);
-                appendChild(td1, number, s);
-                appendChild(tr, td1, s);
-                appendChild(tr, td2, s);
-                appendChild(tr, td3, s);
-                appendChild(tbody, tr, s);
-                appendChild(table, tbody, s);
+                removeButton.onclick = function () {
+                    current.splice(itemindex(itemWrapper), 1);
+                    parent.removeChild(itemWrapper);
+                    computChildCount();
+                };           
+              
+                var number = document.createTextNode(parent.children.length + 1);
+                appendChild(itemIndex, number, s);
+                appendChild(itemWrapper, itemIndex, s);
+                appendChild(itemWrapper, itemValue, s);
+                appendChild(itemWrapper, removeButton, s);
+                appendChild(parent, itemWrapper, s);
                 var pp = createPropertyProvider(function () {
-                    return tr.rowIndex;
+                    return itemindex(itemWrapper);
                 });
-                render(null, td3, id, current, pp, value);
+                render(null, itemValue, id, current, pp, value);
             }
 
             var schemaId = getSchemaId(id);
@@ -742,9 +779,9 @@ if (typeof brutusin === "undefined") {
                 };
             }
             var div = document.createElement("div");
-            var table = document.createElement("table");
-            table.className = "array";
-            appendChild(div, table, s);
+            var parentWrapper = document.createElement("div");
+            parentWrapper.className = "array";
+            appendChild(div, parentWrapper, s);
             appendChild(container, div, s);
             var addButton = document.createElement("button");
             if (s.readOnly)
@@ -752,10 +789,10 @@ if (typeof brutusin === "undefined") {
             addButton.setAttribute('type', 'button');
             addButton.className = "addItem";
             addButton.getValidationError = function () {
-                if (s.minItems && s.minItems > table.rows.length) {
+                if (s.minItems && s.minItems > parentWrapper.children.length) {
                     return BrutusinForms.messages["minItems"].format(s.minItems);
                 }
-                if (s.maxItems && s.maxItems < table.rows.length) {
+                if (s.maxItems && s.maxItems < parentWrapper.children.length) {
                     return BrutusinForms.messages["maxItems"].format(s.maxItems);
                 }
                 if (s.uniqueItems) {
@@ -769,17 +806,17 @@ if (typeof brutusin === "undefined") {
                 }
             };
             addButton.onclick = function () {
-                addItem(current, table, id + "[#]", null);
+                addItem(current, parentWrapper, id + "[" + current.length + "]", null);
             };
             if (itemS.description) {
                 addButton.title = itemS.description;
             }
             appendChild(addButton, document.createTextNode(BrutusinForms.messages["addItem"]), s);
-            appendChild(div, table, s);
+            appendChild(div, parentWrapper, s);
             appendChild(div, addButton, s);
             if (value && value instanceof Array) {
                 for (var i = 0; i < value.length; i++) {
-                    addItem(current, table, id + "[" + i + "]", value[i], s.readOnly);
+                    addItem(current, parentWrapper, id + "[" + i + "]", value[i], s.readOnly);
                 }
             }
             appendChild(container, div, s);
@@ -927,11 +964,14 @@ if (typeof brutusin === "undefined") {
             }
         }
 
-        function appendChild(parent, child, schema) {
+        function appendChild(parent, child, schema, cb) {
             parent.appendChild(child);
             for (var i = 0; i < BrutusinForms.decorators.length; i++) {
                 BrutusinForms.decorators[i](child, schema);
             }
+            if (cb){
+                cb();
+            }           
         }
 
         function createPseudoSchema(schema) {
@@ -1176,25 +1216,22 @@ if (typeof brutusin === "undefined") {
                 }
             }
         }
-
         function render(titleContainer, container, id, parentObject, propertyProvider, value) {
-            //console.log(id);
             var schemaId = getSchemaId(id);
             var s = getSchema(schemaId);
-            renderInfoMap[schemaId] = new Object();
-            renderInfoMap[schemaId].titleContainer = titleContainer;
-            renderInfoMap[schemaId].container = container;
-            renderInfoMap[schemaId].parentObject = parentObject;
-            renderInfoMap[schemaId].propertyProvider = propertyProvider;
-            renderInfoMap[schemaId].value = value;
-            clear(titleContainer);
-            clear(container);
-            //console.log(id,s,value);
+            renderInfoMap[id] = new Object();
+            renderInfoMap[id].titleContainer = titleContainer;
+            renderInfoMap[id].container = container;
+            renderInfoMap[id].parentObject = parentObject;
+            renderInfoMap[id].propertyProvider = propertyProvider;
+            renderInfoMap[id].value = value;          
+            clear(titleContainer);	
+            clear(container); 
             var r = renderers[s.type];
             if (r && !s.dependsOn) {
-                if (s.title) {
+                if (s.title && s.format !== "hidden") {
                     renderTitle(titleContainer, s.title, s);
-                } else if (propertyProvider) {
+                } else if (propertyProvider && s.format !== "hidden") {
                     renderTitle(titleContainer, propertyProvider.getValue(), s);
                 }
                 if (!value) {
@@ -1224,7 +1261,7 @@ if (typeof brutusin === "undefined") {
                     BrutusinForms.onResolutionStarted(parentObject);
                     obj.schemaResolver([id], obj.getData(), cb);
                 }
-            }
+            }           
         }
 
         /**
@@ -1256,8 +1293,11 @@ if (typeof brutusin === "undefined") {
             }
             var value;
             
-            if (input.tagName.toLowerCase() === "select") {
-                value = input.options[input.selectedIndex].value;
+            if (input.tagName.toLowerCase() === "select") {               
+                value =  $(input).val();
+                if(typeof value === "object"){
+                    value = value.join();
+                }
             } else {
                 value = input.value;
             }
@@ -1334,7 +1374,7 @@ if (typeof brutusin === "undefined") {
                     for (var id in schemas) {
                         if (JSON.stringify(schemaMap[id]) !== JSON.stringify(schemas[id])) {
                             cleanSchemaMap(id);
-                            cleanData(id);
+                            //cleanData(id);
                             populateSchemaMap(id, schemas[id]);
                             var renderInfo = renderInfoMap[id];
                             if (renderInfo) {
@@ -1413,7 +1453,7 @@ if (typeof brutusin === "undefined") {
                             throw ("Node '" + name + "' is of type array");
                         }
                         var element = currentToken.substring(1, currentToken.length - 1);
-                        if (element.equals("#")) {
+                        if (element === "#") {
                             for (var i = 0; i < data.length; i++) {
                                 var child = data[i];
                                 visit(name + currentToken, queue.slice(0), child, data, i);
@@ -1525,7 +1565,7 @@ if (typeof brutusin === "undefined") {
                 }
                 return ret;
             }
-        }
+        }      
     };
     brutusin["json-forms"] = BrutusinForms;
 }());
