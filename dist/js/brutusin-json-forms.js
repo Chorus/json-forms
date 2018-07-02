@@ -180,6 +180,11 @@ if (typeof brutusin === "undefined") {
                 // XXX TODO, encode the SOB properly.
             } else if (s.enum) {
                 input = document.createElement("select");
+
+                //if its multiple selection
+                if(value && value.includes(",")){
+                    value = value.split(',');
+                }
                 if (!s.required) {
                     var option = document.createElement("option");
                     var textNode = document.createTextNode("");
@@ -194,19 +199,36 @@ if (typeof brutusin === "undefined") {
                     option.value = s.enum[i];
                     appendChild(option, textNode, s);
                     appendChild(input, option, s);
-                    if (value && s.enum[i] === value) {
-                        selectedIndex = i;
-                        if (!s.required) {
-                            selectedIndex++;
+                    if(typeof value === "string"){
+                        if (value && s.enum[i] === value) {
+                            selectedIndex = i;
+                            if (!s.required) {
+                                selectedIndex++;
+                            }
+                            if (s.readOnly)
+                                input.disabled = true;
                         }
-                        if (s.readOnly)
-                            input.disabled = true;
                     }
+                }               
+                var setValCb;
+                if(typeof value === "string"){
+                    if (s.enum.length === 1){
+                        input.selectedIndex = 0;
+                    }
+                    else {
+                        input.selectedIndex = selectedIndex;
+                    }                  
                 }
-                if (s.enum.length === 1)
-                    input.selectedIndex = 0;
-                else
-                    input.selectedIndex = selectedIndex;
+                else if (value) {
+                    input.selectedIndex = -1;
+                    setValCb = function(){
+                        $(input).val(value).trigger('change');
+                    }                   
+                }
+                else {
+                    input.selectedIndex = -1;
+                }
+             
             } else {
                 input = document.createElement("input");
                 if (s.type === "integer" || s.type === "number") {
@@ -345,7 +367,7 @@ if (typeof brutusin === "undefined") {
             input.onchange();
             input.id = getInputId();
             inputCounter++;
-            appendChild(container, input, s);
+            appendChild(container, input, s, setValCb);
             return parentObject;
         };
 
@@ -942,11 +964,14 @@ if (typeof brutusin === "undefined") {
             }
         }
 
-        function appendChild(parent, child, schema) {
+        function appendChild(parent, child, schema, cb) {
             parent.appendChild(child);
             for (var i = 0; i < BrutusinForms.decorators.length; i++) {
                 BrutusinForms.decorators[i](child, schema);
             }
+            if (cb){
+                cb();
+            }           
         }
 
         function createPseudoSchema(schema) {
