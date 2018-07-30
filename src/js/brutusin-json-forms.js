@@ -715,9 +715,7 @@ if (typeof brutusin === "undefined") {
                 var s = getSchema(schemaId);                
                   
                 var itemWrapper = document.createElement("div");
-                itemWrapper.className = "item";
-                var itemIndex = document.createElement("span");
-                itemIndex.className = "item-index";
+                itemWrapper.className = "item";               
                 var removeButton = document.createElement("button");
                 removeButton.setAttribute('type', 'button');
                 removeButton.className = "remove pull-right";
@@ -728,30 +726,14 @@ if (typeof brutusin === "undefined") {
                     removeButton.disabled = true;
                 }
                 appendChild(removeButton, document.createTextNode("x"), s);
-
-                var computChildCount = function () {
-                    for (var i = 0; i < parent.children.length; i++) {
-                        var childElm = parent.children[i];
-                        for(var j = 0; j < childElm.children.length; j++){
-                            var grandChildElm = childElm.children[j];
-                            if(grandChildElm.className == "item-index"){
-                                grandChildElm.innerHTML = i + 1;
-                            }
-                        }                      
-                    }
-                };
+          
                 var itemindex = function(item){
                    return Array.prototype.indexOf.call(parent.children, item);
                 };
                 removeButton.onclick = function () {
                     current.splice(itemindex(itemWrapper), 1);
-                    parent.removeChild(itemWrapper);
-                    computChildCount();
-                };           
-              
-                var number = document.createTextNode(parent.children.length + 1);
-                appendChild(itemIndex, number, s);
-                appendChild(itemWrapper, itemIndex, s);
+                    parent.removeChild(itemWrapper);                 
+                }; 
                 appendChild(itemWrapper, itemValue, s);
                 appendChild(itemWrapper, removeButton, s);
                 appendChild(parent, itemWrapper, s);

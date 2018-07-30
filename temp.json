@@ -1,0 +1,37 @@
+{
+	"$schema": "http://json-schema.org/draft-03/schema#",
+	"type": "object",
+	"properties": {
+		"goals": {
+			"type": "array",
+			"title": "GOALS",
+			"items": {
+				"description": "Query item",
+				"type": "object",
+				"properties": {
+					"none": {
+						"type": "string",
+						"format": "hidden"
+					},
+					"selectedGoals": {
+                        "type":"array",
+                        "items":{
+                            "dependsOn": [
+                                "none"
+                            ]
+                        }						
+					},
+					"progress": {
+						"type": "string",
+						"title": "progress",
+						"required": true
+					},
+					"duration": {
+					    "type":"string",
+					    "title":"duration"
+					}
+				}
+			}
+		}
+	}
+}
